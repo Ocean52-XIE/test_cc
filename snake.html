@@ -615,13 +615,18 @@
                 target: 50 + (i - 1) * 20 + Math.floor((i - 1) / 5) * 30,
                 obstacles: Math.min(30, Math.floor((i - 1) * 1.5)),
                 speed: Math.max(50, 130 - i * 4),
-                powerupChance: Math.min(0.5, 0.2 + i * 0.015)
+                powerupChance: Math.min(0.5, 0.2 + i * 0.015),
+                // 动态障碍物配置：从第5关开始，生成频率逐渐提高
+                tempObstacleInterval: i >= 5 ? Math.max(3000, 8000 - i * 300) : 0, // 生成间隔(ms)
+                tempObstacleDuration: Math.max(3000, 6000 - i * 100) // 持续时间(ms)
             });
         }
 
         // 障碍物
         let obstacles = [];
         let frozenObstacles = false;
+        let tempObstacles = []; // 临时障碍物
+        let tempObstacleTimer = null; // 临时障碍物生成定时器
 
         // 食物
         let food = null;
@@ -1038,6 +1043,13 @@
             isPaused = false;
             isGameOver = false;
             powerups = [];
+            tempObstacles = [];
+            
+            // 清除临时障碍物定时器
+            if (tempObstacleTimer) {
+                clearInterval(tempObstacleTimer);
+                tempObstacleTimer = null;
+            }
             
             for (const key of Object.keys(activePowerups)) {
                 activePowerups[key].active = false;
@@ -1055,10 +1067,16 @@
             
             updateLevelInfo();
             updateSkinDisplay();
+            
+            // 启动临时障碍物生成定时器（从第5关开始）
+            if (level.tempObstacleInterval > 0) {
+                tempObstacleTimer = setInterval(() => {
+                    generateTempObstacle(level.tempObstacleDuration);
+                }, level.tempObstacleInterval);
+            }
         }
 
         // 更新关卡信息显示
-        function updateLevelInfo() {
             const details = document.getElementById('nextLevelDetails');
             if (currentLevel < 20) {
                 const next = levels[currentLevel];
@@ -1103,6 +1121,18 @@
                 }
                 ctx.shadowBlur = 5;
                 ctx.fillRect(obs.x * gridSize + 2, obs.y * gridSize + 2, gridSize - 4, gridSize - 4);
+            });
+            
+            // 绘制临时障碍物（闪烁效果）
+            const now = Date.now();
+            tempObstacles = tempObstacles.filter(temp => now < temp.endTime);
+            tempObstacles.forEach(temp => {
+                const remaining = Math.ceil((temp.endTime - now) / 1000);
+                const alpha = Math.min(1, remaining / 3); // 剩余3秒内逐渐透明
+                ctx.fillStyle = `rgba(255, 100, 0, ${alpha})`;
+                ctx.shadowColor = `rgba(255, 100, 0, ${alpha})`;
+                ctx.shadowBlur = 10;
+                ctx.fillRect(temp.x * gridSize + 2, temp.y * gridSize + 2, gridSize - 4, gridSize - 4);
             });
             ctx.shadowBlur = 0;
 
@@ -1246,8 +1276,11 @@
                 }
             }
 
-            // 检测撞障碍物
-            if (!frozenObstacles && obstacles.some(o => o.x === head.x && o.y === head.y)) {
+            // 检测撞障碍物（包括临时障碍物）
+            const hitObstacle = obstacles.some(o => o.x === head.x && o.y === head.y);
+            const hitTempObstacle = tempObstacles.some(o => o.x === head.x && o.y === head.y && now < o.endTime);
+            
+            if (!frozenObstacles && (hitObstacle || hitTempObstacle)) {
                 if (!activePowerups.immortal.active && !canIgnoreCollision) {
                     gameOver();
                     return;
@@ -1294,9 +1327,75 @@
             draw();
         }
 
+        // 生成临时障碍物
+        function generateTempObstacle(duration) {
+            if (isGameOver || isPaused || snake.length === 0) return;
+            
+            const head = snake[0];
+            const level = levels[currentLevel - 1];
+            
+            // 尝试找一个合适的位置
+            let attempts = 0;
+            let newObs = null;
+            
+            while (attempts < 50) {
+                const x = Math.floor(Math.random() * gridCount);
+                const y = Math.floor(Math.random() * gridCount);
+                
+                // 检查是否在蛇身上
+                const onSnake = snake.some(s => s.x === x && s.y === y);
+                if (onSnake) {
+                    attempts++;
+                    continue;
+                }
+                
+                // 检查与蛇头距离（曼哈顿距离）
+                const distToHead = Math.abs(x - head.x) + Math.abs(y - head.y);
+                if (distToHead < 3) {
+                    attempts++;
+                    continue;
+                }
+                
+                // 检查是否在已有障碍物上
+                const onObstacle = obstacles.some(o => o.x === x && o.y === y);
+                if (onObstacle) {
+                    attempts++;
+                    continue;
+                }
+                
+                // 检查是否在食物上
+                if (food && food.x === x && food.y === y) {
+                    attempts++;
+                    continue;
+                }
+                
+                // 检查是否在特殊食物上
+                const onPowerup = powerups.some(p => p.x === x && p.y === y);
+                if (onPowerup) {
+                    attempts++;
+                    continue;
+                }
+                
+                newObs = { x, y, endTime: Date.now() + duration };
+                break;
+            }
+            
+            if (newObs) {
+                tempObstacles.push(newObs);
+                // 限制临时障碍物数量
+                if (tempObstacles.length > 5) {
+                    tempObstacles.shift();
+                }
+            }
+        }
+
         // 关卡完成
         function levelComplete() {
             clearInterval(gameLoop);
+            if (tempObstacleTimer) {
+                clearInterval(tempObstacleTimer);
+                tempObstacleTimer = null;
+            }
             totalScore += score;
             
             // 检查是否解锁新皮肤
@@ -1351,6 +1450,10 @@
         function gameOver() {
             isGameOver = true;
             clearInterval(gameLoop);
+            if (tempObstacleTimer) {
+                clearInterval(tempObstacleTimer);
+                tempObstacleTimer = null;
+            }
             
             totalScore += score;
             
