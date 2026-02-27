@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>贪吃蛇游戏 - 关卡版</title>
+    <title>贪吃蛇游戏 - 皮肤技能版</title>
     <style>
         * {
             margin: 0;
@@ -23,7 +23,7 @@
         .game-container {
             text-align: center;
             background: rgba(255, 255, 255, 0.1);
-            padding: 30px;
+            padding: 20px;
             border-radius: 20px;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -32,58 +32,90 @@
         h1 {
             color: #00d9ff;
             margin-bottom: 10px;
-            font-size: 2.5em;
+            font-size: 2.2em;
             text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
         }
 
         .level-display {
             color: #ffd700;
-            font-size: 1.2em;
-            margin-bottom: 15px;
+            font-size: 1.1em;
+            margin-bottom: 10px;
             text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .skin-info {
+            color: #ff6b9d;
+            font-size: 0.9em;
+            margin-bottom: 10px;
         }
 
         .score-board {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 15px;
-            gap: 15px;
+            margin-bottom: 10px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         .score-item {
             background: rgba(0, 217, 255, 0.1);
-            padding: 8px 20px;
+            padding: 6px 15px;
             border-radius: 10px;
             border: 2px solid rgba(0, 217, 255, 0.3);
-            min-width: 100px;
+            min-width: 80px;
         }
 
         .score-label {
             color: #888;
-            font-size: 0.8em;
-            margin-bottom: 3px;
+            font-size: 0.75em;
+            margin-bottom: 2px;
         }
 
         .score-value {
             color: #00d9ff;
-            font-size: 1.5em;
+            font-size: 1.3em;
             font-weight: bold;
+        }
+
+        .skill-cooldown {
+            background: rgba(255, 107, 157, 0.2);
+            border-color: rgba(255, 107, 157, 0.4);
+        }
+
+        .skill-cooldown .score-value {
+            color: #ff6b9d;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d9ff, #ffd700);
+            transition: width 0.3s ease;
+            border-radius: 4px;
         }
 
         .powerup-status {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            min-height: 30px;
+            gap: 8px;
+            margin-bottom: 10px;
+            min-height: 26px;
+            flex-wrap: wrap;
         }
 
         .powerup-indicator {
             background: rgba(255, 255, 255, 0.1);
-            padding: 5px 15px;
-            border-radius: 15px;
-            font-size: 0.9em;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
             animation: pulse 1s infinite;
         }
 
@@ -97,6 +129,7 @@
         .powerup-immortal { color: #ffd700; border: 1px solid #ffd700; }
         .powerup-shrink { color: #ff6b6b; border: 1px solid #ff6b6b; }
         .powerup-double { color: #ff00ff; border: 1px solid #ff00ff; }
+        .powerup-skill { color: #ff6b9d; border: 1px solid #ff6b9d; }
 
         #gameCanvas {
             border: 3px solid #00d9ff;
@@ -106,20 +139,20 @@
         }
 
         .controls {
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         button {
             background: linear-gradient(135deg, #00d9ff, #0099cc);
             color: #0a0a15;
             border: none;
-            padding: 12px 25px;
-            font-size: 1em;
-            border-radius: 25px;
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border-radius: 20px;
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s ease;
-            margin: 5px;
+            margin: 4px;
         }
 
         button:hover {
@@ -131,10 +164,16 @@
             transform: translateY(0);
         }
 
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .instructions {
-            margin-top: 15px;
+            margin-top: 10px;
             color: #888;
-            font-size: 0.85em;
+            font-size: 0.8em;
         }
 
         .instructions span {
@@ -143,24 +182,24 @@
         }
 
         .food-legend {
-            margin-top: 15px;
+            margin-top: 10px;
             display: flex;
             justify-content: center;
-            gap: 15px;
+            gap: 12px;
             flex-wrap: wrap;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 5px;
-            font-size: 0.8em;
+            gap: 4px;
+            font-size: 0.75em;
             color: #aaa;
         }
 
         .legend-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
         }
 
@@ -170,7 +209,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -179,81 +218,145 @@
 
         .modal {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 40px;
+            padding: 30px;
             border-radius: 20px;
             border: 3px solid #00d9ff;
             text-align: center;
-            max-width: 400px;
+            max-width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
             box-shadow: 0 0 50px rgba(0, 217, 255, 0.3);
         }
 
         .modal h2 {
             color: #00d9ff;
-            font-size: 2em;
-            margin-bottom: 20px;
+            font-size: 1.8em;
+            margin-bottom: 15px;
         }
 
         .modal p {
             color: #fff;
-            margin-bottom: 10px;
-            font-size: 1.1em;
+            margin-bottom: 8px;
+            font-size: 1em;
         }
 
         .modal .score-display {
             color: #ffd700;
-            font-size: 1.5em;
+            font-size: 1.4em;
             font-weight: bold;
-            margin: 15px 0;
+            margin: 12px 0;
         }
 
         .level-info {
             background: rgba(255, 215, 0, 0.1);
             padding: 10px;
             border-radius: 10px;
-            margin: 15px 0;
+            margin: 12px 0;
             border: 1px solid rgba(255, 215, 0, 0.3);
         }
 
         .level-info h3 {
             color: #ffd700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            font-size: 1em;
         }
 
         .level-info ul {
             list-style: none;
             color: #ccc;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
         .level-info li {
-            margin: 5px 0;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #00ff88, #00d9ff, #ffd700);
-            transition: width 0.3s ease;
-            border-radius: 5px;
+            margin: 4px 0;
         }
 
         .hidden {
             display: none !important;
+        }
+
+        /* 皮肤选择 */
+        .skin-selector {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .skin-selector h3 {
+            color: #ff6b9d;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .skin-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .skin-option {
+            padding: 8px;
+            border-radius: 8px;
+            border: 2px solid #333;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.75em;
+        }
+
+        .skin-option:hover:not(.locked) {
+            border-color: #00d9ff;
+            transform: scale(1.05);
+        }
+
+        .skin-option.selected {
+            border-color: #00ff88;
+            background: rgba(0, 255, 136, 0.2);
+        }
+
+        .skin-option.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .skin-option .skin-name {
+            color: #fff;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .skin-option .skin-unlock {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .skin-option .skin-skill {
+            color: #ff6b9d;
+            font-size: 0.85em;
+            margin-top: 3px;
+        }
+
+        .unlock-notice {
+            background: rgba(255, 215, 0, 0.2);
+            border: 1px solid #ffd700;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            color: #ffd700;
+        }
+
+        .unlock-notice h3 {
+            color: #ffd700;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>🐍 贪吃蛇</h1>
-        <div class="level-display">关卡 <span id="currentLevel">1</span> / 10</div>
+        <div class="level-display">关卡 <span id="currentLevel">1</span> / 20</div>
+        <div class="skin-info">皮肤: <span id="currentSkinName">经典绿蛇</span> | 技能: <span id="currentSkillName">无</span></div>
         
         <div class="score-board">
             <div class="score-item">
@@ -268,6 +371,10 @@
                 <div class="score-label">最高分数</div>
                 <div class="score-value" id="highScore">0</div>
             </div>
+            <div class="score-item skill-cooldown">
+                <div class="score-label">技能冷却</div>
+                <div class="score-value" id="skillCooldown">就绪</div>
+            </div>
         </div>
 
         <div class="progress-bar">
@@ -280,20 +387,22 @@
 
         <div class="controls">
             <button onclick="startGame()">开始游戏</button>
-            <button onclick="pauseGame()">暂停/继续</button>
+            <button onclick="pauseGame()">暂停</button>
+            <button onclick="useSkill()" id="skillBtn">使用技能 (E)</button>
+            <button onclick="showSkinSelector()">选择皮肤</button>
         </div>
 
         <div class="food-legend">
-            <div class="legend-item"><div class="legend-dot" style="background: #ff4757;"></div>普通食物</div>
+            <div class="legend-item"><div class="legend-dot" style="background: #ff4757;"></div>普通</div>
             <div class="legend-item"><div class="legend-dot" style="background: #00ff88;"></div>加速</div>
             <div class="legend-item"><div class="legend-dot" style="background: #00d9ff;"></div>减速</div>
             <div class="legend-item"><div class="legend-dot" style="background: #ffd700;"></div>无敌</div>
             <div class="legend-item"><div class="legend-dot" style="background: #ff6b6b;"></div>缩短</div>
-            <div class="legend-item"><div class="legend-dot" style="background: #ff00ff;"></div>双倍分</div>
+            <div class="legend-item"><div class="legend-dot" style="background: #ff00ff;"></div>双倍</div>
         </div>
 
         <div class="instructions">
-            <span>方向键</span> / <span>WASD</span> 控制移动 | <span>空格</span> 暂停
+            <span>方向键/WASD</span> 移动 | <span>空格</span> 暂停 | <span>E</span> 技能
         </div>
     </div>
 
@@ -301,17 +410,32 @@
     <div class="overlay" id="startScreen">
         <div class="modal">
             <h2>🐍 贪吃蛇</h2>
-            <p>关卡挑战版</p>
+            <p>皮肤技能版 - 20关挑战</p>
+            <div class="skin-selector">
+                <h3>🎨 选择皮肤</h3>
+                <div class="skin-grid" id="skinGrid"></div>
+            </div>
             <div class="level-info">
                 <h3>游戏说明</h3>
                 <ul>
-                    <li>🎯 共 10 个关卡，难度递增</li>
-                    <li>🧱 高关卡会出现障碍物</li>
+                    <li>🎯 共 20 个关卡，难度递增</li>
+                    <li>🎨 通关解锁皮肤，每种皮肤有独特技能</li>
                     <li>✨ 收集特殊食物获得能力</li>
-                    <li>⭐ 达到目标分数过关</li>
+                    <li>⭐ 按 E 键使用皮肤技能</li>
                 </ul>
             </div>
             <button onclick="startGame()">开始游戏</button>
+        </div>
+    </div>
+
+    <!-- 皮肤选择界面 -->
+    <div class="overlay hidden" id="skinScreen">
+        <div class="modal">
+            <h2>🎨 皮肤选择</h2>
+            <div class="skin-selector">
+                <div class="skin-grid" id="skinGridInGame"></div>
+            </div>
+            <button onclick="hideSkinSelector()">确定</button>
         </div>
     </div>
 
@@ -321,6 +445,10 @@
             <h2>🎉 关卡完成!</h2>
             <p>恭喜通过第 <span id="completedLevel">1</span> 关</p>
             <div class="score-display">得分: <span id="levelScore">0</span></div>
+            <div class="unlock-notice hidden" id="unlockNotice">
+                <h3>🔓 解锁新皮肤!</h3>
+                <p id="unlockSkinName"></p>
+            </div>
             <div class="level-info" id="nextLevelInfo">
                 <h3>下一关预告</h3>
                 <ul id="nextLevelDetails"></ul>
@@ -335,6 +463,7 @@
             <h2>💀 游戏结束</h2>
             <p>你在第 <span id="finalLevel">1</span> 关失败</p>
             <div class="score-display">最终得分: <span id="finalScore">0</span></div>
+            <div class="score-display">最高通关: 第 <span id="maxLevel">0</span> 关</div>
             <button onclick="restartGame()">重新开始</button>
         </div>
     </div>
@@ -343,8 +472,9 @@
     <div class="overlay hidden" id="gameWin">
         <div class="modal">
             <h2>🏆 恭喜通关!</h2>
-            <p>你完成了所有 10 个关卡!</p>
+            <p>你完成了所有 20 个关卡!</p>
             <div class="score-display">总分: <span id="totalScore">0</span></div>
+            <p style="color: #ffd700; margin-top: 15px;">🌟 已解锁全部皮肤! 🌟</p>
             <button onclick="restartGame()">再玩一次</button>
         </div>
     </div>
@@ -362,6 +492,7 @@
         let score = 0;
         let totalScore = 0;
         let highScore = localStorage.getItem('snakeHighScore') || 0;
+        let maxLevelReached = localStorage.getItem('snakeMaxLevel') || 0;
         let gameLoop = null;
         let gameSpeed = 120;
         let baseSpeed = 120;
@@ -369,22 +500,127 @@
         let isGameOver = false;
         let currentLevel = 1;
 
-        // 关卡配置
-        const levels = [
-            { target: 50, obstacles: 0, speed: 120, powerupChance: 0.2 },
-            { target: 80, obstacles: 2, speed: 115, powerupChance: 0.25 },
-            { target: 100, obstacles: 4, speed: 110, powerupChance: 0.25 },
-            { target: 120, obstacles: 6, speed: 105, powerupChance: 0.3 },
-            { target: 150, obstacles: 8, speed: 100, powerupChance: 0.3 },
-            { target: 180, obstacles: 10, speed: 95, powerupChance: 0.35 },
-            { target: 200, obstacles: 12, speed: 90, powerupChance: 0.35 },
-            { target: 230, obstacles: 15, speed: 85, powerupChance: 0.4 },
-            { target: 260, obstacles: 18, speed: 80, powerupChance: 0.4 },
-            { target: 300, obstacles: 20, speed: 75, powerupChance: 0.45 }
+        // 皮肤系统
+        const skins = [
+            { 
+                id: 'classic', 
+                name: '经典绿蛇', 
+                unlockLevel: 0, 
+                skill: '无',
+                skillCooldown: 0,
+                colors: { head: '#00ff88', body: '#00cc66', bodyAlt: '#00d9ff' },
+                skillEffect: null
+            },
+            { 
+                id: 'lightning', 
+                name: '⚡闪电蛇', 
+                unlockLevel: 2, 
+                skill: '闪电冲刺',
+                skillCooldown: 15000,
+                colors: { head: '#ffff00', body: '#ffcc00', bodyAlt: '#ff9900' },
+                skillEffect: 'dash'
+            },
+            { 
+                id: 'frost', 
+                name: '❄️冰霜蛇', 
+                unlockLevel: 4, 
+                skill: '冰冻障碍',
+                skillCooldown: 20000,
+                colors: { head: '#00d9ff', body: '#0099cc', bodyAlt: '#0066aa' },
+                skillEffect: 'freeze'
+            },
+            { 
+                id: 'fire', 
+                name: '🔥火焰蛇', 
+                unlockLevel: 6, 
+                skill: '火焰清除',
+                skillCooldown: 25000,
+                colors: { head: '#ff4400', body: '#ff6600', bodyAlt: '#ff8800' },
+                skillEffect: 'clearPath'
+            },
+            { 
+                id: 'ghost', 
+                name: '👻幽灵蛇', 
+                unlockLevel: 8, 
+                skill: '穿墙术',
+                skillCooldown: 20000,
+                colors: { head: '#aaaaaa', body: '#888888', bodyAlt: '#666666' },
+                skillEffect: 'ghost'
+            },
+            { 
+                id: 'gold', 
+                name: '🌟金龙蛇', 
+                unlockLevel: 10, 
+                skill: '黄金时刻',
+                skillCooldown: 30000,
+                colors: { head: '#ffd700', body: '#ffcc00', bodyAlt: '#ffaa00' },
+                skillEffect: 'goldMode'
+            },
+            { 
+                id: 'rainbow', 
+                name: '🌈彩虹蛇', 
+                unlockLevel: 12, 
+                skill: '幸运彩虹',
+                skillCooldown: 25000,
+                colors: { head: '#ff00ff', body: '#00ffff', bodyAlt: '#ffff00' },
+                skillEffect: 'randomBuff'
+            },
+            { 
+                id: 'shadow', 
+                name: '🌑暗影蛇', 
+                unlockLevel: 14, 
+                skill: '暗影步',
+                skillCooldown: 20000,
+                colors: { head: '#4a0080', body: '#2a0060', bodyAlt: '#1a0040' },
+                skillEffect: 'shadowWalk'
+            },
+            { 
+                id: 'time', 
+                name: '⏰时光蛇', 
+                unlockLevel: 16, 
+                skill: '时间减缓',
+                skillCooldown: 35000,
+                colors: { head: '#00ffcc', body: '#00ccaa', bodyAlt: '#009988' },
+                skillEffect: 'timeSlow'
+            },
+            { 
+                id: 'dragon', 
+                name: '🐲神龙蛇', 
+                unlockLevel: 18, 
+                skill: '龙息',
+                skillCooldown: 40000,
+                colors: { head: '#ff0066', body: '#cc0044', bodyAlt: '#990033' },
+                skillEffect: 'dragonBreath'
+            },
+            { 
+                id: 'cosmic', 
+                name: '🌌宇宙蛇', 
+                unlockLevel: 20, 
+                skill: '星际传送',
+                skillCooldown: 30000,
+                colors: { head: '#9900ff', body: '#6600cc', bodyAlt: '#330099' },
+                skillEffect: 'teleport'
+            }
         ];
+
+        let currentSkin = skins[0];
+        let skillCooldownEnd = 0;
+        let isSkillActive = false;
+
+        // 20关配置
+        const levels = [];
+        for (let i = 1; i <= 20; i++) {
+            levels.push({
+                target: 50 + (i - 1) * 20 + Math.floor((i - 1) / 5) * 30,
+                obstacles: Math.min(30, Math.floor((i - 1) * 1.5)),
+                speed: Math.max(50, 130 - i * 4),
+                powerupChance: Math.min(0.5, 0.2 + i * 0.015)
+            });
+        }
 
         // 障碍物
         let obstacles = [];
+        let frozenObstacles = false;
 
         // 食物
         let food = null;
@@ -392,10 +628,13 @@
 
         // 能力状态
         let activePowerups = {
-            speed: { active: false, timer: null, endTime: 0 },
-            slow: { active: false, timer: null, endTime: 0 },
-            immortal: { active: false, timer: null, endTime: 0 },
-            double: { active: false, timer: null, endTime: 0 }
+            speed: { active: false, endTime: 0 },
+            slow: { active: false, endTime: 0 },
+            immortal: { active: false, endTime: 0 },
+            double: { active: false, endTime: 0 },
+            ghost: { active: false, endTime: 0 },
+            goldMode: { active: false, endTime: 0 },
+            shadowWalk: { active: false, endTime: 0 }
         };
 
         // 特殊食物类型
@@ -409,27 +648,189 @@
 
         document.getElementById('highScore').textContent = highScore;
 
+        // 初始化皮肤选择器
+        function initSkinSelector() {
+            const grids = [document.getElementById('skinGrid'), document.getElementById('skinGridInGame')];
+            grids.forEach(grid => {
+                if (!grid) return;
+                grid.innerHTML = '';
+                skins.forEach(skin => {
+                    const unlocked = maxLevelReached >= skin.unlockLevel;
+                    const div = document.createElement('div');
+                    div.className = `skin-option ${unlocked ? '' : 'locked'} ${currentSkin.id === skin.id ? 'selected' : ''}`;
+                    div.innerHTML = `
+                        <div class="skin-name">${skin.name}</div>
+                        <div class="skin-unlock">${unlocked ? '已解锁' : `第${skin.unlockLevel}关解锁`}</div>
+                        <div class="skin-skill">${skin.skill}</div>
+                    `;
+                    if (unlocked) {
+                        div.onclick = () => selectSkin(skin);
+                    }
+                    grid.appendChild(div);
+                });
+            });
+        }
+
+        function selectSkin(skin) {
+            if (maxLevelReached >= skin.unlockLevel) {
+                currentSkin = skin;
+                localStorage.setItem('snakeCurrentSkin', skin.id);
+                updateSkinDisplay();
+                initSkinSelector();
+            }
+        }
+
+        function updateSkinDisplay() {
+            document.getElementById('currentSkinName').textContent = currentSkin.name;
+            document.getElementById('currentSkillName').textContent = currentSkin.skill;
+        }
+
+        function showSkinSelector() {
+            document.getElementById('skinScreen').classList.remove('hidden');
+        }
+
+        function hideSkinSelector() {
+            document.getElementById('skinScreen').classList.add('hidden');
+        }
+
+        // 使用技能
+        function useSkill() {
+            if (isGameOver || isPaused || currentSkin.skillEffect === null) return;
+            
+            const now = Date.now();
+            if (now < skillCooldownEnd) return;
+
+            skillCooldownEnd = now + currentSkin.skillCooldown;
+            isSkillActive = true;
+
+            switch (currentSkin.skillEffect) {
+                case 'dash': // 闪电冲刺
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            if (!isGameOver && !isPaused) gameStep();
+                        }, i * 50);
+                    }
+                    showSkillEffect('闪电冲刺!', '#ffff00');
+                    break;
+
+                case 'freeze': // 冰冻障碍
+                    frozenObstacles = true;
+                    setTimeout(() => { frozenObstacles = false; }, 5000);
+                    showSkillEffect('障碍冻结 5秒!', '#00d9ff');
+                    break;
+
+                case 'clearPath': // 火焰清除
+                    const head = snake[0];
+                    const toRemove = [];
+                    for (let i = 0; i < 5; i++) {
+                        let checkX = head.x, checkY = head.y;
+                        switch (direction) {
+                            case 'up': checkY = head.y - i - 1; break;
+                            case 'down': checkY = head.y + i + 1; break;
+                            case 'left': checkX = head.x - i - 1; break;
+                            case 'right': checkX = head.x + i + 1; break;
+                        }
+                        obstacles.forEach((obs, idx) => {
+                            if (obs.x === checkX && obs.y === checkY) toRemove.push(idx);
+                        });
+                    }
+                    toRemove.reverse().forEach(idx => obstacles.splice(idx, 1));
+                    showSkillEffect('火焰清除!', '#ff4400');
+                    break;
+
+                case 'ghost': // 穿墙术
+                    activePowerups.ghost.active = true;
+                    activePowerups.ghost.endTime = now + 5000;
+                    showSkillEffect('穿墙 5秒!', '#aaaaaa');
+                    break;
+
+                case 'goldMode': // 黄金时刻
+                    activePowerups.goldMode.active = true;
+                    activePowerups.goldMode.endTime = now + 8000;
+                    activePowerups.double.active = true;
+                    activePowerups.double.endTime = now + 8000;
+                    showSkillEffect('双倍分+无敌 8秒!', '#ffd700');
+                    activePowerups.immortal.active = true;
+                    activePowerups.immortal.endTime = now + 8000;
+                    break;
+
+                case 'randomBuff': // 幸运彩虹
+                    const buffs = ['speed', 'immortal', 'double'];
+                    const buff = buffs[Math.floor(Math.random() * buffs.length)];
+                    activePowerups[buff].active = true;
+                    activePowerups[buff].endTime = now + 6000;
+                    const buffNames = { speed: '加速', immortal: '无敌', double: '双倍分' };
+                    showSkillEffect(`获得 ${buffNames[buff]} 6秒!`, '#ff00ff');
+                    break;
+
+                case 'shadowWalk': // 暗影步
+                    activePowerups.shadowWalk.active = true;
+                    activePowerups.shadowWalk.endTime = now + 4000;
+                    showSkillEffect('暗影步 4秒!', '#4a0080');
+                    break;
+
+                case 'timeSlow': // 时间减缓
+                    gameSpeed = baseSpeed + 60;
+                    updateGameSpeed();
+                    setTimeout(() => {
+                        gameSpeed = baseSpeed;
+                        updateGameSpeed();
+                    }, 6000);
+                    showSkillEffect('时间减缓 6秒!', '#00ffcc');
+                    break;
+
+                case 'dragonBreath': // 龙息
+                    activePowerups.immortal.active = true;
+                    activePowerups.immortal.endTime = now + 5000;
+                    obstacles = obstacles.slice(0, Math.floor(obstacles.length * 0.3));
+                    showSkillEffect('龙息! 清除70%障碍+无敌5秒!', '#ff0066');
+                    break;
+
+                case 'teleport': // 星际传送
+                    let newX, newY, attempts = 0;
+                    do {
+                        newX = Math.floor(Math.random() * gridCount);
+                        newY = Math.floor(Math.random() * gridCount);
+                        attempts++;
+                    } while (
+                        attempts < 100 &&
+                        (snake.some(s => s.x === newX && s.y === newY) ||
+                        obstacles.some(o => o.x === newX && o.y === newY))
+                    );
+                    snake[0] = { x: newX, y: newY };
+                    activePowerups.immortal.active = true;
+                    activePowerups.immortal.endTime = now + 2000;
+                    showSkillEffect('传送成功!', '#9900ff');
+                    break;
+            }
+
+            updatePowerupDisplay();
+        }
+
+        function showSkillEffect(text, color) {
+            const indicator = document.createElement('div');
+            indicator.className = 'powerup-indicator powerup-skill';
+            indicator.textContent = text;
+            indicator.style.color = color;
+            indicator.style.borderColor = color;
+            document.getElementById('powerupStatus').appendChild(indicator);
+            setTimeout(() => indicator.remove(), 3000);
+        }
+
         // 生成障碍物
         function generateObstacles() {
             obstacles = [];
+            frozenObstacles = false;
             const level = levels[currentLevel - 1];
             const count = level.obstacles;
             
-            // 预定义的障碍物模式
             const patterns = [
-                // 边缘方块
                 () => [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
-                // 横条
                 () => Array.from({length: 5}, (_, i) => ({ x: 5 + i, y: 10 })),
-                // 竖条
                 () => Array.from({length: 5}, (_, i) => ({ x: 15, y: 5 + i })),
-                // L形
                 () => [{ x: 2, y: 15 }, { x: 2, y: 16 }, { x: 2, y: 17 }, { x: 3, y: 17 }, { x: 4, y: 17 }],
-                // T形
                 () => [{ x: 10, y: 5 }, { x: 9, y: 6 }, { x: 10, y: 6 }, { x: 11, y: 6 }],
-                // 十字
                 () => [{ x: 17, y: 17 }, { x: 16, y: 18 }, { x: 17, y: 18 }, { x: 18, y: 18 }, { x: 17, y: 19 }],
-                // 单点散布
                 () => [{ x: Math.floor(Math.random() * 16) + 2, y: Math.floor(Math.random() * 16) + 2 }]
             ];
 
@@ -480,7 +881,6 @@
             );
             food = newFood;
 
-            // 随机生成特殊食物
             const level = levels[currentLevel - 1];
             if (Math.random() < level.powerupChance && powerups.length < 3) {
                 generatePowerup();
@@ -515,8 +915,6 @@
             
             switch (powerup.type) {
                 case 'speed':
-                    clearPowerup('speed');
-                    clearPowerup('slow');
                     activePowerups.speed.active = true;
                     activePowerups.speed.endTime = now + powerup.duration;
                     gameSpeed = Math.max(40, baseSpeed - 40);
@@ -524,8 +922,6 @@
                     break;
                     
                 case 'slow':
-                    clearPowerup('speed');
-                    clearPowerup('slow');
                     activePowerups.slow.active = true;
                     activePowerups.slow.endTime = now + powerup.duration;
                     gameSpeed = baseSpeed + 40;
@@ -533,7 +929,6 @@
                     break;
                     
                 case 'immortal':
-                    clearPowerup('immortal');
                     activePowerups.immortal.active = true;
                     activePowerups.immortal.endTime = now + powerup.duration;
                     break;
@@ -545,22 +940,12 @@
                     break;
                     
                 case 'double':
-                    clearPowerup('double');
                     activePowerups.double.active = true;
                     activePowerups.double.endTime = now + powerup.duration;
                     break;
             }
             
             updatePowerupDisplay();
-        }
-
-        // 清除能力
-        function clearPowerup(type) {
-            if (activePowerups[type].timer) {
-                clearTimeout(activePowerups[type].timer);
-            }
-            activePowerups[type].active = false;
-            activePowerups[type].timer = null;
         }
 
         // 更新游戏速度
@@ -577,14 +962,16 @@
             const now = Date.now();
             
             for (const [key, value] of Object.entries(activePowerups)) {
-                if (value.active) {
+                if (value.active && value.endTime > 0) {
                     const remaining = Math.ceil((value.endTime - now) / 1000);
                     if (remaining > 0) {
                         const indicator = document.createElement('div');
-                        indicator.className = `powerup-indicator powerup-${key}`;
-                        
-                        const names = { speed: '加速', slow: '减速', immortal: '无敌', double: '双倍分' };
-                        indicator.textContent = `${names[key]} ${remaining}s`;
+                        indicator.className = `powerup-indicator powerup-${key === 'ghost' ? 'skill' : key}`;
+                        const names = { 
+                            speed: '加速', slow: '减速', immortal: '无敌', 
+                            double: '双倍分', ghost: '穿墙', goldMode: '黄金', shadowWalk: '暗影' 
+                        };
+                        indicator.textContent = `${names[key] || key} ${remaining}s`;
                         container.appendChild(indicator);
                     }
                 }
@@ -597,8 +984,9 @@
             let changed = false;
             
             for (const [key, value] of Object.entries(activePowerups)) {
-                if (value.active && now >= value.endTime) {
+                if (value.active && value.endTime > 0 && now >= value.endTime) {
                     value.active = false;
+                    value.endTime = 0;
                     changed = true;
                     
                     if (key === 'speed' || key === 'slow') {
@@ -607,6 +995,11 @@
                     }
                 }
             }
+            
+            // 更新技能冷却显示
+            const cooldownRemaining = Math.max(0, Math.ceil((skillCooldownEnd - now) / 1000));
+            document.getElementById('skillCooldown').textContent = cooldownRemaining > 0 ? `${cooldownRemaining}s` : '就绪';
+            document.getElementById('skillBtn').disabled = cooldownRemaining > 0 || currentSkin.skillEffect === null;
             
             if (changed) {
                 updatePowerupDisplay();
@@ -631,9 +1024,9 @@
             isGameOver = false;
             powerups = [];
             
-            // 清除所有能力
             for (const key of Object.keys(activePowerups)) {
-                clearPowerup(key);
+                activePowerups[key].active = false;
+                activePowerups[key].endTime = 0;
             }
             
             document.getElementById('score').textContent = score;
@@ -646,24 +1039,27 @@
             generateFood();
             
             updateLevelInfo();
+            updateSkinDisplay();
         }
 
         // 更新关卡信息显示
         function updateLevelInfo() {
             const details = document.getElementById('nextLevelDetails');
-            if (currentLevel < 10) {
+            if (currentLevel < 20) {
                 const next = levels[currentLevel];
                 details.innerHTML = `
                     <li>🎯 目标分数: ${next.target}</li>
                     <li>🧱 障碍物: ${next.obstacles} 个</li>
-                    <li>⚡ 基础速度: 更快</li>
+                    <li>⚡ 速度: 更快</li>
                 `;
+                document.getElementById('nextLevelInfo').classList.remove('hidden');
+            } else {
+                document.getElementById('nextLevelInfo').classList.add('hidden');
             }
         }
 
         // 绘制游戏
         function draw() {
-            // 清空画布
             ctx.fillStyle = '#0a0a15';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -683,15 +1079,15 @@
 
             // 绘制障碍物
             obstacles.forEach(obs => {
-                ctx.fillStyle = '#444';
-                ctx.shadowColor = '#666';
+                if (frozenObstacles) {
+                    ctx.fillStyle = '#00d9ff';
+                    ctx.shadowColor = '#00d9ff';
+                } else {
+                    ctx.fillStyle = '#444';
+                    ctx.shadowColor = '#666';
+                }
                 ctx.shadowBlur = 5;
-                ctx.fillRect(
-                    obs.x * gridSize + 2,
-                    obs.y * gridSize + 2,
-                    gridSize - 4,
-                    gridSize - 4
-                );
+                ctx.fillRect(obs.x * gridSize + 2, obs.y * gridSize + 2, gridSize - 4, gridSize - 4);
             });
             ctx.shadowBlur = 0;
 
@@ -701,7 +1097,6 @@
                 ctx.shadowColor = powerup.color;
                 ctx.shadowBlur = 15;
                 
-                // 绘制星形
                 const cx = powerup.x * gridSize + gridSize / 2;
                 const cy = powerup.y * gridSize + gridSize / 2;
                 const spikes = 5;
@@ -727,19 +1122,29 @@
                 ctx.shadowColor = '#ff4757';
                 ctx.shadowBlur = 15;
                 ctx.beginPath();
-                ctx.arc(
-                    food.x * gridSize + gridSize / 2,
-                    food.y * gridSize + gridSize / 2,
-                    gridSize / 2 - 2,
-                    0,
-                    Math.PI * 2
-                );
+                ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2 - 2, 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.shadowBlur = 0;
 
             // 绘制蛇
+            const isImmortal = activePowerups.immortal.active || activePowerups.goldMode.active;
+            const isGhost = activePowerups.ghost.active;
+            const isShadow = activePowerups.shadowWalk.active;
+            
             snake.forEach((segment, index) => {
+                let headColor = currentSkin.colors.head;
+                let bodyColor = currentSkin.colors.body;
+                let bodyAltColor = currentSkin.colors.bodyAlt;
+                
+                if (isImmortal) {
+                    headColor = '#ffd700';
+                    bodyColor = '#ffcc00';
+                    bodyAltColor = '#ffaa00';
+                }
+                
+                ctx.globalAlpha = isShadow ? 0.5 : 1;
+                
                 const gradient = ctx.createRadialGradient(
                     segment.x * gridSize + gridSize / 2,
                     segment.y * gridSize + gridSize / 2,
@@ -750,44 +1155,29 @@
                 );
                 
                 if (index === 0) {
-                    if (activePowerups.immortal.active) {
-                        gradient.addColorStop(0, '#ffd700');
-                        gradient.addColorStop(1, '#ff8c00');
-                        ctx.shadowColor = '#ffd700';
-                    } else {
-                        gradient.addColorStop(0, '#00ff88');
-                        gradient.addColorStop(1, '#00cc66');
-                        ctx.shadowColor = '#00ff88';
-                    }
+                    gradient.addColorStop(0, headColor);
+                    gradient.addColorStop(1, bodyColor);
+                    ctx.shadowColor = headColor;
                     ctx.shadowBlur = 15;
                 } else {
-                    if (activePowerups.immortal.active) {
-                        gradient.addColorStop(0, '#ffd700');
-                        gradient.addColorStop(1, '#cc9900');
-                    } else {
-                        gradient.addColorStop(0, '#00d9ff');
-                        gradient.addColorStop(1, '#0099cc');
-                    }
+                    const useAlt = index % 3 === 0;
+                    gradient.addColorStop(0, useAlt ? bodyAltColor : bodyColor);
+                    gradient.addColorStop(1, bodyColor);
                     ctx.shadowBlur = 5;
                 }
 
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
-                ctx.roundRect(
-                    segment.x * gridSize + 1,
-                    segment.y * gridSize + 1,
-                    gridSize - 2,
-                    gridSize - 2,
-                    5
-                );
+                ctx.roundRect(segment.x * gridSize + 1, segment.y * gridSize + 1, gridSize - 2, gridSize - 2, 5);
                 ctx.fill();
             });
 
+            ctx.globalAlpha = 1;
             ctx.shadowBlur = 0;
 
             // 绘制蛇眼睛
             const head = snake[0];
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = isShadow ? 'rgba(255,255,255,0.5)' : '#fff';
             let eyeOffset = { x: 0, y: -3 };
             
             switch(direction) {
@@ -798,16 +1188,8 @@
             }
             
             ctx.beginPath();
-            ctx.arc(
-                head.x * gridSize + gridSize / 2 + eyeOffset.x,
-                head.y * gridSize + gridSize / 2 + eyeOffset.y,
-                3, 0, Math.PI * 2
-            );
-            ctx.arc(
-                head.x * gridSize + gridSize / 2 - eyeOffset.x,
-                head.y * gridSize + gridSize / 2 + eyeOffset.y,
-                3, 0, Math.PI * 2
-            );
+            ctx.arc(head.x * gridSize + gridSize / 2 + eyeOffset.x, head.y * gridSize + gridSize / 2 + eyeOffset.y, 3, 0, Math.PI * 2);
+            ctx.arc(head.x * gridSize + gridSize / 2 - eyeOffset.x, head.y * gridSize + gridSize / 2 + eyeOffset.y, 3, 0, Math.PI * 2);
             ctx.fill();
 
             // 更新进度条
@@ -833,23 +1215,25 @@
                 case 'right': head.x++; break;
             }
 
+            const canPassWall = activePowerups.ghost.active || activePowerups.immortal.active;
+            const canIgnoreCollision = activePowerups.shadowWalk.active;
+
             // 检测撞墙
             if (head.x < 0 || head.x >= gridCount || head.y < 0 || head.y >= gridCount) {
-                if (!activePowerups.immortal.active) {
-                    gameOver();
-                    return;
-                } else {
-                    // 无敌时穿墙
+                if (canPassWall) {
                     if (head.x < 0) head.x = gridCount - 1;
                     if (head.x >= gridCount) head.x = 0;
                     if (head.y < 0) head.y = gridCount - 1;
                     if (head.y >= gridCount) head.y = 0;
+                } else if (!canIgnoreCollision) {
+                    gameOver();
+                    return;
                 }
             }
 
             // 检测撞障碍物
-            if (obstacles.some(o => o.x === head.x && o.y === head.y)) {
-                if (!activePowerups.immortal.active) {
+            if (!frozenObstacles && obstacles.some(o => o.x === head.x && o.y === head.y)) {
+                if (!activePowerups.immortal.active && !canIgnoreCollision) {
                     gameOver();
                     return;
                 }
@@ -857,7 +1241,7 @@
 
             // 检测撞自己
             if (snake.some(s => s.x === head.x && s.y === head.y)) {
-                if (!activePowerups.immortal.active) {
+                if (!activePowerups.immortal.active && !canIgnoreCollision) {
                     gameOver();
                     return;
                 }
@@ -867,11 +1251,12 @@
 
             // 检测吃到普通食物
             if (food && head.x === food.x && head.y === food.y) {
-                const points = activePowerups.double.active ? 20 : 10;
+                let points = 10;
+                if (activePowerups.double.active) points *= 2;
+                if (activePowerups.goldMode.active) points *= 2;
                 score += points;
                 document.getElementById('score').textContent = score;
                 
-                // 检查是否过关
                 const level = levels[currentLevel - 1];
                 if (score >= level.target) {
                     levelComplete();
@@ -899,8 +1284,22 @@
             clearInterval(gameLoop);
             totalScore += score;
             
-            if (currentLevel >= 10) {
-                // 通关
+            // 检查是否解锁新皮肤
+            let unlockedSkin = null;
+            for (const skin of skins) {
+                if (skin.unlockLevel === currentLevel && maxLevelReached < currentLevel) {
+                    unlockedSkin = skin;
+                    break;
+                }
+            }
+            
+            // 更新最高关卡
+            if (currentLevel > maxLevelReached) {
+                maxLevelReached = currentLevel;
+                localStorage.setItem('snakeMaxLevel', maxLevelReached);
+            }
+            
+            if (currentLevel >= 20) {
                 if (totalScore > highScore) {
                     highScore = totalScore;
                     localStorage.setItem('snakeHighScore', highScore);
@@ -913,8 +1312,11 @@
                 document.getElementById('completedLevel').textContent = currentLevel;
                 document.getElementById('levelScore').textContent = score;
                 
-                if (currentLevel === 9) {
-                    document.getElementById('nextLevelInfo').classList.add('hidden');
+                if (unlockedSkin) {
+                    document.getElementById('unlockNotice').classList.remove('hidden');
+                    document.getElementById('unlockSkinName').textContent = `${unlockedSkin.name} - 技能: ${unlockedSkin.skill}`;
+                } else {
+                    document.getElementById('unlockNotice').classList.add('hidden');
                 }
                 
                 document.getElementById('levelComplete').classList.remove('hidden');
@@ -925,7 +1327,6 @@
         function nextLevel() {
             document.getElementById('levelComplete').classList.add('hidden');
             currentLevel++;
-            totalScore += score;
             initGame();
             draw();
             gameLoop = setInterval(gameStep, gameSpeed);
@@ -944,8 +1345,14 @@
                 document.getElementById('highScore').textContent = highScore;
             }
             
+            if (currentLevel > maxLevelReached) {
+                maxLevelReached = currentLevel;
+                localStorage.setItem('snakeMaxLevel', maxLevelReached);
+            }
+            
             document.getElementById('finalLevel').textContent = currentLevel;
             document.getElementById('finalScore').textContent = totalScore;
+            document.getElementById('maxLevel').textContent = maxLevelReached;
             document.getElementById('gameOver').classList.remove('hidden');
         }
 
@@ -958,6 +1365,7 @@
             
             currentLevel = 1;
             totalScore = 0;
+            skillCooldownEnd = 0;
             
             clearInterval(gameLoop);
             initGame();
@@ -967,7 +1375,8 @@
 
         // 重新开始
         function restartGame() {
-            startGame();
+            initSkinSelector();
+            document.getElementById('startScreen').classList.remove('hidden');
         }
 
         // 暂停
@@ -978,13 +1387,7 @@
 
         // 改变方向
         function changeDirection(newDir) {
-            const opposites = {
-                'up': 'down',
-                'down': 'up',
-                'left': 'right',
-                'right': 'left'
-            };
-            
+            const opposites = { 'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left' };
             if (newDir !== opposites[direction]) {
                 nextDirection = newDir;
             }
@@ -993,14 +1396,8 @@
         // 键盘控制
         document.addEventListener('keydown', (e) => {
             const keyMap = {
-                'ArrowUp': 'up',
-                'ArrowDown': 'down',
-                'ArrowLeft': 'left',
-                'ArrowRight': 'right',
-                'KeyW': 'up',
-                'KeyS': 'down',
-                'KeyA': 'left',
-                'KeyD': 'right'
+                'ArrowUp': 'up', 'ArrowDown': 'down', 'ArrowLeft': 'left', 'ArrowRight': 'right',
+                'KeyW': 'up', 'KeyS': 'down', 'KeyA': 'left', 'KeyD': 'right'
             };
 
             if (keyMap[e.code]) {
@@ -1012,9 +1409,24 @@
                 e.preventDefault();
                 pauseGame();
             }
+            
+            if (e.code === 'KeyE') {
+                e.preventDefault();
+                useSkill();
+            }
         });
 
-        // 初始绘制
+        // 初始化
+        const savedSkinId = localStorage.getItem('snakeCurrentSkin');
+        if (savedSkinId) {
+            const savedSkin = skins.find(s => s.id === savedSkinId);
+            if (savedSkin && maxLevelReached >= savedSkin.unlockLevel) {
+                currentSkin = savedSkin;
+            }
+        }
+        
+        initSkinSelector();
+        updateSkinDisplay();
         initGame();
         draw();
     </script>
