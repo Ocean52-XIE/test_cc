@@ -1375,6 +1375,9 @@
 
         // 重新开始
         function restartGame() {
+            document.getElementById('gameOver').classList.add('hidden');
+            document.getElementById('gameWin').classList.add('hidden');
+            document.getElementById('levelComplete').classList.add('hidden');
             initSkinSelector();
             document.getElementById('startScreen').classList.remove('hidden');
         }
