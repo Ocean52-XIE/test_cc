@@ -435,7 +435,7 @@
             <div class="skin-selector">
                 <div class="skin-grid" id="skinGridInGame"></div>
             </div>
-            <button onclick="hideSkinSelector()">确定</button>
+            <button onclick="hideSkinSelectorAndReturn()">确定</button>
         </div>
     </div>
 
@@ -454,6 +454,7 @@
                 <ul id="nextLevelDetails"></ul>
             </div>
             <button onclick="nextLevel()">下一关</button>
+            <button onclick="showSkinSelectorInLevel()" style="background: linear-gradient(135deg, #ff6b9d, #ff4777);">🎨 选择皮肤</button>
         </div>
     </div>
 
@@ -691,6 +692,20 @@
 
         function hideSkinSelector() {
             document.getElementById('skinScreen').classList.add('hidden');
+        }
+
+        function showSkinSelectorInLevel() {
+            document.getElementById('levelComplete').classList.add('hidden');
+            document.getElementById('skinScreen').classList.remove('hidden');
+            window._fromLevelComplete = true;
+        }
+
+        function hideSkinSelectorAndReturn() {
+            document.getElementById('skinScreen').classList.add('hidden');
+            if (window._fromLevelComplete) {
+                document.getElementById('levelComplete').classList.remove('hidden');
+                window._fromLevelComplete = false;
+            }
         }
 
         // 使用技能
