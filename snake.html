@@ -1478,20 +1478,29 @@
 
         // 开始游戏
         function startGame() {
-            console.log("startGame called");
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('gameOver').classList.add('hidden');
-            document.getElementById('gameWin').classList.add('hidden');
-            document.getElementById('levelComplete').classList.add('hidden');
-            
-            currentLevel = 1;
-            totalScore = 0;
-            skillCooldownEnd = 0;
-            
-            clearInterval(gameLoop);
-            initGame();
-            draw();
-            gameLoop = setInterval(gameStep, gameSpeed);
+            console.log("🎮 startGame() called - v2.1");
+            try {
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('gameOver').classList.add('hidden');
+                document.getElementById('gameWin').classList.add('hidden');
+                document.getElementById('levelComplete').classList.add('hidden');
+                
+                currentLevel = 1;
+                totalScore = 0;
+                skillCooldownEnd = 0;
+                
+                clearInterval(gameLoop);
+                console.log("📦 Initializing game...");
+                initGame();
+                console.log("🎨 Drawing canvas...");
+                draw();
+                console.log("▶️ Starting game loop...");
+                gameLoop = setInterval(gameStep, gameSpeed);
+                console.log("✅ Game started successfully!");
+            } catch (error) {
+                console.error("❌ Error starting game:", error);
+                alert("游戏启动失败: " + error.message + "\n请查看控制台获取详细信息。");
+            }
         }
 
         // 重新开始
