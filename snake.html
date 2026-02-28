@@ -492,8 +492,8 @@
         let nextDirection = 'right';
         let score = 0;
         let totalScore = 0;
-        let highScore = localStorage.getItem('snakeHighScore') || 0;
-        let maxLevelReached = localStorage.getItem('snakeMaxLevel') || 0;
+        let highScore = parseInt(localStorage.getItem('snakeHighScore')) || 0;
+        let maxLevelReached = parseInt(localStorage.getItem('snakeMaxLevel')) || 0;
         let gameLoop = null;
         let gameSpeed = 120;
         let baseSpeed = 120;
