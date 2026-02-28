@@ -410,7 +410,7 @@
     <div class="overlay" id="startScreen">
         <div class="modal">
             <h2>🐍 贪吃蛇</h2>
-            <p>皮肤技能版 - 20关挑战</p>
+            <p>皮肤技能版 - 20关挑战 <span style="color: #888; font-size: 0.8em;">v2.1</span></p>
             <div class="skin-selector">
                 <h3>🎨 选择皮肤</h3>
                 <div class="skin-grid" id="skinGrid"></div>
@@ -1478,6 +1478,7 @@
 
         // 开始游戏
         function startGame() {
+            console.log("startGame called");
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('gameOver').classList.add('hidden');
             document.getElementById('gameWin').classList.add('hidden');
