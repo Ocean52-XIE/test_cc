@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇 3D - 皮肤技能版 v3.0</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; font-family: 'Segoe UI', sans-serif; background: #0a0a15; }
+        #gameCanvas { display: block; }
+        .ui-overlay { position: fixed; top: 10px; left: 10px; z-index: 100; color: #fff; pointer-events: none; }
+        .score-board { display: flex; gap: 15px; margin-bottom: 10px; }
+        .score-item { background: rgba(0, 217, 255, 0.15); padding: 8px 15px; border-radius: 10px; border: 2px solid rgba(0, 217, 255, 0.3); }
+        .score-label { color: #888; font-size: 0.75em; }
+        .score-value { color: #00d9ff; font-size: 1.3em; font-weight: bold; }
+        .level-display { color: #ffd700; font-size: 1.1em; margin-bottom: 10px; }
+        .skin-info { color: #ff6b9d; font-size: 0.9em; margin-bottom: 10px; }
+        .progress-bar { width: 300px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 8px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #00ff88, #00d9ff, #ffd700); border-radius: 4px; transition: width 0.3s; }
+        .powerup-status { display: flex; gap: 8px; min-height: 26px; }
+        .powerup-indicator { padding: 4px 12px; border-radius: 12px; font-size: 0.85em; animation: pulse 1s infinite; border: 1px solid; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .controls-hint { position: fixed; bottom: 10px; left: 10px; color: #666; font-size: 0.8em; z-index: 100; }
+        .controls-hint span { color: #00d9ff; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 200; }
+        .modal { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 30px; border-radius: 20px; border: 3px solid #00d9ff; text-align: center; max-width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 50px rgba(0,217,255,0.3); }
+        .modal h2 { color: #00d9ff; font-size: 1.8em; margin-bottom: 15px; }
+        .modal p { color: #fff; margin-bottom: 8px; }
+        .modal .score-display { color: #ffd700; font-size: 1.4em; font-weight: bold; margin: 12px 0; }
+        .level-info { background: rgba(255,215,0,0.1); padding: 10px; border-radius: 10px; margin: 12px 0; border: 1px solid rgba(255,215,0,0.3); }
+        .level-info h3 { color: #ffd700; margin-bottom: 8px; }
+        .level-info ul { list-style: none; color: #ccc; font-size: 0.85em; }
+        .level-info li { margin: 4px 0; }
+        .hidden { display: none !important; }
+        .skin-selector { margin: 15px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; }
+        .skin-selector h3 { color: #ff6b9d; margin-bottom: 10px; }
+        .skin-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .skin-option { padding: 8px; border-radius: 8px; border: 2px solid #333; cursor: pointer; transition: all 0.3s; font-size: 0.7em; }
+        .skin-option:hover:not(.locked) { border-color: #00d9ff; transform: scale(1.05); }
+        .skin-option.selected { border-color: #00ff88; background: rgba(0,255,136,0.2); }
+        .skin-option.locked { opacity: 0.4; cursor: not-allowed; }
+        .skin-option .skin-name { color: #fff; font-weight: bold; margin-bottom: 3px; }
+        .skin-option .skin-unlock { color: #888; font-size: 0.9em; }
+        .skin-option .skin-skill { color: #ff6b9d; font-size: 0.85em; margin-top: 3px; }
+        button { background: linear-gradient(135deg, #00d9ff, #0099cc); color: #0a0a15; border: none; padding: 12px 25px; font-size: 1em; border-radius: 20px; cursor: pointer; font-weight: bold; margin: 5px; transition: all 0.3s; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(0,217,255,0.4); }
+        .unlock-notice { background: rgba(255,215,0,0.2); border: 1px solid #ffd700; border-radius: 8px; padding: 10px; margin: 10px 0; color: #ffd700; }
+    </style>
+</head>
+<body>
+    <div id="gameCanvas"></div>
+    <div class="ui-overlay" id="uiOverlay">
+        <div class="level-display">关卡 <span id="currentLevel">1</span> / 20</div>
+        <div class="skin-info">皮肤: <span id="currentSkinName">经典绿蛇</span> | 技能: <span id="currentSkillName">无</span></div>
+        <div class="score-board">
+            <div class="score-item"><div class="score-label">当前分数</div><div class="score-value" id="score">0</div></div>
+            <div class="score-item"><div class="score-label">目标分数</div><div class="score-value" id="targetScore">50</div></div>
+            <div class="score-item"><div class="score-label">最高分数</div><div class="score-value" id="highScore">0</div></div>
+            <div class="score-item"><div class="score-label">技能冷却</div><div class="score-value" id="skillCooldown">就绪</div></div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 0%"></div></div>
+        <div class="powerup-status" id="powerupStatus"></div>
+    </div>
+    <div class="controls-hint"><span>方向键/WASD</span> 移动 | <span>空格</span> 暂停 | <span>E</span> 技能 | <span>鼠标拖动</span> 旋转视角</div>
+
+    <div class="overlay" id="startScreen">
+        <div class="modal">
+            <h2>🐍 贪吃蛇 3D</h2>
+            <p>皮肤技能版 - 20关挑战 <span style="color:#888;font-size:0.8em;">v3.0</span></p>
+            <div class="skin-selector"><h3>🎨 选择皮肤</h3><div class="skin-grid" id="skinGrid"></div></div>
+            <div class="level-info"><h3>游戏说明</h3><ul>
+                <li>🎯 共 20 个关卡，难度递增</li><li>🎨 通关解锁皮肤，每种皮肤有独特技能</li>
+                <li>✨ 收集特殊食物获得能力</li><li>⭐ 按 E 键使用皮肤技能</li>
+                <li>🖱️ 拖动鼠标旋转3D视角</li>
+            </ul></div>
+            <button onclick="startGame()">开始游戏</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="skinScreen">
+        <div class="modal"><h2>🎨 皮肤选择</h2>
+            <div class="skin-selector"><div class="skin-grid" id="skinGridInGame"></div></div>
+            <button onclick="hideSkinSelector()">确定</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="levelComplete">
+        <div class="modal"><h2>🎉 关卡完成!</h2>
+            <p>恭喜通过第 <span id="completedLevel">1</span> 关</p>
+            <div class="score-display">得分: <span id="levelScore">0</span></div>
+            <div class="unlock-notice hidden" id="unlockNotice"><h3>🔓 解锁新皮肤!</h3><p id="unlockSkinName"></p></div>
+            <div class="level-info" id="nextLevelInfo"><h3>下一关预告</h3><ul id="nextLevelDetails"></ul></div>
+            <button onclick="nextLevel()">下一关</button>
+            <button onclick="document.getElementById('levelComplete').classList.add('hidden');document.getElementById('skinScreen').classList.remove('hidden');" style="background:linear-gradient(135deg,#ff6b9d,#ff4777);">🎨 选择皮肤</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="gameOver">
+        <div class="modal"><h2>💀 游戏结束</h2>
+            <p>你在第 <span id="finalLevel">1</span> 关失败</p>
+            <div class="score-display">最终得分: <span id="finalScore">0</span></div>
+            <div class="score-display">最高通关: 第 <span id="maxLevel">0</span> 关</div>
+            <button onclick="restartGame()">重新开始</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="gameWin">
+        <div class="modal"><h2>🏆 恭喜通关!</h2>
+            <p>你完成了所有 20 个关卡!</p>
+            <div class="score-display">总分: <span id="totalScore">0</span></div>
+            <p style="color:#ffd700;margin-top:15px;">🌟 已解锁全部皮肤! 🌟</p>
+            <button onclick="restartGame()">再玩一次</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <script>
+        const GRID_SIZE = 20;
+        let scene, camera, renderer, controls;
+        let snakeMeshes = [], foodMesh = null, powerupMeshes = [], obstacleMeshes = [], tempObstacleMeshes = [];
+        let snake = [], direction = 'right', nextDirection = 'right', score = 0, totalScore = 0;
+        let highScore = parseInt(localStorage.getItem('snakeHighScore')) || 0;
+        let maxLevelReached = parseInt(localStorage.getItem('snakeMaxLevel')) || 0;
+        let gameLoop = null, gameSpeed = 120, baseSpeed = 120, isPaused = false, isGameOver = false, currentLevel = 1;
+        let obstacles = [], frozenObstacles = false, tempObstacles = [], tempObstacleTimer = null, food = null, powerups = [];
+        let skillCooldownEnd = 0;
+
+        const skins = [
+            { id: 'classic', name: '经典绿蛇', unlockLevel: 0, skill: '无', skillCooldown: 0, colors: { head: 0x00ff88, body: 0x00cc66 }, skillEffect: null },
+            { id: 'lightning', name: '⚡闪电蛇', unlockLevel: 2, skill: '闪电冲刺', skillCooldown: 15000, colors: { head: 0xffff00, body: 0xffcc00 }, skillEffect: 'dash' },
+            { id: 'frost', name: '❄️冰霜蛇', unlockLevel: 4, skill: '冰冻障碍', skillCooldown: 20000, colors: { head: 0x00d9ff, body: 0x0099cc }, skillEffect: 'freeze' },
+            { id: 'fire', name: '🔥火焰蛇', unlockLevel: 6, skill: '火焰清除', skillCooldown: 25000, colors: { head: 0xff4400, body: 0xff6600 }, skillEffect: 'clearPath' },
+            { id: 'ghost', name: '👻幽灵蛇', unlockLevel: 8, skill: '穿墙术', skillCooldown: 20000, colors: { head: 0xaaaaaa, body: 0x888888 }, skillEffect: 'ghost' },
+            { id: 'gold', name: '🌟金龙蛇', unlockLevel: 10, skill: '黄金时刻', skillCooldown: 30000, colors: { head: 0xffd700, body: 0xffcc00 }, skillEffect: 'goldMode' },
+            { id: 'rainbow', name: '🌈彩虹蛇', unlockLevel: 12, skill: '幸运彩虹', skillCooldown: 25000, colors: { head: 0xff00ff, body: 0x00ffff }, skillEffect: 'randomBuff' },
+            { id: 'shadow', name: '🌑暗影蛇', unlockLevel: 14, skill: '暗影步', skillCooldown: 20000, colors: { head: 0x4a0080, body: 0x2a0060 }, skillEffect: 'shadowWalk' },
+            { id: 'time', name: '⏰时光蛇', unlockLevel: 16, skill: '时间减缓', skillCooldown: 35000, colors: { head: 0x00ffcc, body: 0x00ccaa }, skillEffect: 'timeSlow' },
+            { id: 'dragon', name: '🐲神龙蛇', unlockLevel: 18, skill: '龙息', skillCooldown: 40000, colors: { head: 0xff0066, body: 0xcc0044 }, skillEffect: 'dragonBreath' },
+            { id: 'cosmic', name: '🌌宇宙蛇', unlockLevel: 20, skill: '星际传送', skillCooldown: 30000, colors: { head: 0x9900ff, body: 0x6600cc }, skillEffect: 'teleport' }
+        ];
+        let currentSkin = skins[0];
+
+        const levels = [];
+        for (let i = 1; i <= 20; i++) {
+            levels.push({
+                target: 50 + (i - 1) * 20 + Math.floor((i - 1) / 5) * 30,
+                obstacles: Math.min(30, Math.floor((i - 1) * 1.5)),
+                speed: Math.max(50, 130 - i * 4),
+                powerupChance: Math.min(0.5, 0.2 + i * 0.015),
+                tempObstacleInterval: i >= 5 ? Math.max(3000, 8000 - i * 300) : 0,
+                tempObstacleDuration: Math.max(3000, 6000 - i * 100)
+            });
+        }
+
+        let activePowerups = {
+            speed: { active: false, endTime: 0 }, slow: { active: false, endTime: 0 },
+            immortal: { active: false, endTime: 0 }, double: { active: false, endTime: 0 },
+            ghost: { active: false, endTime: 0 }, goldMode: { active: false, endTime: 0 }, shadowWalk: { active: false, endTime: 0 }
+        };
+
+        const powerupTypes = [
+            { type: 'speed', color: 0x00ff88, duration: 5000, name: '加速' },
+            { type: 'slow', color: 0x00d9ff, duration: 5000, name: '减速' },
+            { type: 'immortal', color: 0xffd700, duration: 3000, name: '无敌' },
+            { type: 'shrink', color: 0xff6b6b, duration: 0, name: '缩短' },
+            { type: 'double', color: 0xff00ff, duration: 8000, name: '双倍分' }
+        ];
+
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a15);
+            scene.fog = new THREE.Fog(0x0a0a15, 15, 35);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 25, 20);
+            camera.lookAt(0, 0, 0);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('gameCanvas').appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2.2;
+            controls.minDistance = 10;
+            controls.maxDistance = 40;
+
+            scene.add(new THREE.AmbientLight(0x404040, 0.5));
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(10, 20, 10);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+            scene.add(new THREE.PointLight(0x00d9ff, 0.5, 30));
+
+            scene.add(new THREE.GridHelper(GRID_SIZE, GRID_SIZE, 0x00d9ff, 0x1a1a2e));
+
+            const planeGeo = new THREE.PlaneGeometry(GRID_SIZE, GRID_SIZE);
+            const planeMat = new THREE.MeshStandardMaterial({ color: 0x0a0a15, transparent: true, opacity: 0.8 });
+            const plane = new THREE.Mesh(planeGeo, planeMat);
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.y = -0.01;
+            plane.receiveShadow = true;
+            scene.add(plane);
+
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x00d9ff, transparent: true, opacity: 0.3, emissive: 0x00d9ff, emissiveIntensity: 0.2 });
+            const halfGrid = GRID_SIZE / 2, wallH = 0.5;
+            const wallGeo1 = new THREE.BoxGeometry(GRID_SIZE + 0.5, wallH, 0.2);
+            const wallGeo2 = new THREE.BoxGeometry(0.2, wallH, GRID_SIZE + 0.5);
+            [[wallGeo1, 0, wallH/2, -halfGrid - 0.1], [wallGeo1, 0, wallH/2, halfGrid + 0.1],
+             [wallGeo2, -halfGrid - 0.1, wallH/2, 0], [wallGeo2, halfGrid + 0.1, wallH/2, 0]]
+            .forEach(([g, x, y, z]) => { const w = new THREE.Mesh(g, wallMat); w.position.set(x, y, z); scene.add(w); });
+
+            window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+            animate();
+        }
+
+        function gridToWorld(gx, gy) { return { x: gx - GRID_SIZE / 2 + 0.5, z: gy - GRID_SIZE / 2 + 0.5 }; }
+
+        function createSnakeSegment(gx, gy, isHead) {
+            const pos = gridToWorld(gx, gy);
+            const geo = new THREE.CylinderGeometry(0.4, 0.35, 0.5, 16);
+            const color = isHead ? currentSkin.colors.head : currentSkin.colors.body;
+            const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: isHead ? 0.5 : 0.2, metalness: 0.3, roughness: 0.4 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(pos.x, 0.3, pos.z);
+            mesh.castShadow = true;
+            if (isHead) {
+                const eyeGeo = new THREE.SphereGeometry(0.08, 8, 8);
+                const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const leftEye = new THREE.Mesh(eyeGeo, eyeMat), rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+                leftEye.position.set(-0.15, 0.15, 0.3); rightEye.position.set(0.15, 0.15, 0.3);
+                mesh.add(leftEye); mesh.add(rightEye);
+            }
+            scene.add(mesh);
+            return mesh;
+        }
+
+        function updateSnakeMeshes() {
+            snakeMeshes.forEach(m => scene.remove(m));
+            snakeMeshes = [];
+            snake.forEach((seg, i) => {
+                const mesh = createSnakeSegment(seg.x, seg.y, i === 0);
+                if (activePowerups.immortal.active || activePowerups.goldMode.active) {
+                    mesh.material.color.setHex(0xffd700); mesh.material.emissive.setHex(0xffd700);
+                }
+                if (activePowerups.shadowWalk.active) { mesh.material.transparent = true; mesh.material.opacity = 0.5; }
+                snakeMeshes.push(mesh);
+            });
+        }
+
+        function createFoodMesh(gx, gy) {
+            if (foodMesh) scene.remove(foodMesh);
+            const pos = gridToWorld(gx, gy);
+            const geo = new THREE.SphereGeometry(0.35, 16, 16);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xff4757, emissive: 0xff4757, emissiveIntensity: 0.5, metalness: 0.5, roughness: 0.3 });
+            foodMesh = new THREE.Mesh(geo, mat);
+            foodMesh.position.set(pos.x, 0.4, pos.z);
+            foodMesh.castShadow = true;
+            scene.add(foodMesh);
+        }
+
+        function createPowerupMesh(p) {
+            const pos = gridToWorld(p.x, p.y);
+            const geo = new THREE.OctahedronGeometry(0.35);
+            const mat = new THREE.MeshStandardMaterial({ color: p.color, emissive: p.color, emissiveIntensity: 0.6, metalness: 0.6, roughness: 0.2 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(pos.x, 0.5, pos.z);
+            mesh.castShadow = true;
+            mesh.userData.powerup = p;
+            scene.add(mesh);
+            return mesh;
+        }
+
+        function createObstacleMesh(gx, gy, isTemp = false) {
+            const pos = gridToWorld(gx, gy);
+            const geo = new THREE.BoxGeometry(0.8, 0.6, 0.8);
+            const color = frozenObstacles ? 0x00d9ff : (isTemp ? 0xff6400 : 0x444444);
+            const mat = new THREE.MeshStandardMaterial({ color, emissive: isTemp ? 0xff6400 : (frozenObstacles ? 0x00d9ff : 0x000000), emissiveIntensity: isTemp || frozenObstacles ? 0.3 : 0, metalness: 0.5, roughness: 0.5, transparent: isTemp, opacity: isTemp ? 0.8 : 1 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(pos.x, 0.3, pos.z);
+            mesh.castShadow = true;
+            scene.add(mesh);
+            return mesh;
+        }
+
+        function updateObstacleMeshes() { obstacleMeshes.forEach(m => scene.remove(m)); obstacleMeshes = []; obstacles.forEach(o => obstacleMeshes.push(createObstacleMesh(o.x, o.y))); }
+        function updateTempObstacleMeshes() { tempObstacleMeshes.forEach(m => scene.remove(m)); tempObstacleMeshes = []; const now = Date.now(); tempObstacles = tempObstacles.filter(t => now < t.endTime); tempObstacles.forEach(o => tempObstacleMeshes.push(createObstacleMesh(o.x, o.y, true))); }
+        function updatePowerupMeshes() { powerupMeshes.forEach(m => scene.remove(m)); powerupMeshes = []; powerups.forEach(p => powerupMeshes.push(createPowerupMesh(p))); }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (foodMesh) { foodMesh.rotation.y += 0.02; foodMesh.position.y = 0.4 + Math.sin(Date.now() * 0.003) * 0.1; }
+            powerupMeshes.forEach(m => { m.rotation.y += 0.03; m.rotation.x += 0.01; m.position.y = 0.5 + Math.sin(Date.now() * 0.004 + m.position.x) * 0.1; });
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function initGame() {
+            const level = levels[currentLevel - 1];
+            snake = [{ x: 5, y: 10 }, { x: 4, y: 10 }, { x: 3, y: 10 }];
+            direction = 'right'; nextDirection = 'right'; score = 0; baseSpeed = level.speed; gameSpeed = level.speed;
+            isPaused = false; isGameOver = false; powerups = []; tempObstacles = [];
+            if (tempObstacleTimer) { clearInterval(tempObstacleTimer); tempObstacleTimer = null; }
+            Object.keys(activePowerups).forEach(k => { activePowerups[k].active = false; activePowerups[k].endTime = 0; });
+            document.getElementById('score').textContent = score;
+            document.getElementById('currentLevel').textContent = currentLevel;
+            document.getElementById('targetScore').textContent = level.target;
+            document.getElementById('powerupStatus').innerHTML = '';
+            document.getElementById('progressFill').style.width = '0%';
+            generateObstacles(); generateFood();
+            updateSnakeMeshes(); updateObstacleMeshes(); updatePowerupMeshes();
+            updateLevelInfo(); updateSkinDisplay();
+            if (level.tempObstacleInterval > 0) tempObstacleTimer = setInterval(() => generateTempObstacle(level.tempObstacleDuration), level.tempObstacleInterval);
+        }
+
+        function generateObstacles() {
+            obstacles = []; frozenObstacles = false;
+            const level = levels[currentLevel - 1], count = level.obstacles;
+            const patterns = [
+                () => [{ x: 3, y: 3 }, { x: 4, y: 3 }, { x: 3, y: 4 }, { x: 4, y: 4 }],
+                () => Array.from({length: 5}, (_, i) => ({ x: 5 + i, y: 10 })),
+                () => Array.from({length: 5}, (_, i) => ({ x: 15, y: 5 + i })),
+                () => [{ x: Math.floor(Math.random() * 16) + 2, y: Math.floor(Math.random() * 16) + 2 }]
+            ];
+            let placed = 0, attempts = 0;
+            while (placed < count && attempts < 1000) {
+                const newObs = patterns[Math.floor(Math.random() * patterns.length)]();
+                let canPlace = newObs.every(o => o.x >= 2 && o.x < GRID_SIZE - 2 && o.y >= 2 && o.y < GRID_SIZE - 2 && !snake.some(s => s.x === o.x && s.y === o.y) && !obstacles.some(ob => ob.x === o.x && ob.y === o.y));
+                if (canPlace && placed + newObs.length <= count) { obstacles.push(...newObs); placed += newObs.length; }
+                attempts++;
+            }
+        }
+
+        function generateFood() {
+            let newFood;
+            do { newFood = { x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE), type: 'normal' }; }
+            while (snake.some(s => s.x === newFood.x && s.y === newFood.y) || obstacles.some(o => o.x === newFood.x && o.y === newFood.y) || powerups.some(p => p.x === newFood.x && p.y === newFood.y));
+            food = newFood;
+            createFoodMesh(food.x, food.y);
+            const level = levels[currentLevel - 1];
+            if (Math.random() < level.powerupChance && powerups.length < 3) generatePowerup();
+        }
+
+        function generatePowerup() {
+            const pt = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+            let newP;
+            do { newP = { x: Math.floor(Math.random() * GRID_SIZE), y: Math.floor(Math.random() * GRID_SIZE), ...pt }; }
+            while (snake.some(s => s.x === newP.x && s.y === newP.y) || obstacles.some(o => o.x === newP.x && o.y === newP.y) || (food && food.x === newP.x && food.y === newP.y) || powerups.some(p => p.x === newP.x && p.y === newP.y));
+            powerups.push(newP);
+            updatePowerupMeshes();
+        }
+
+        function generateTempObstacle(duration) {
+            if (isGameOver || isPaused || snake.length === 0) return;
+            const head = snake[0];
+            for (let i = 0; i < 50; i++) {
+                const x = Math.floor(Math.random() * GRID_SIZE), y = Math.floor(Math.random() * GRID_SIZE);
+                if (!snake.some(s => s.x === x && s.y === y) && Math.abs(x - head.x) + Math.abs(y - head.y) >= 3 && !obstacles.some(o => o.x === x && o.y === y) && !(food && food.x === x && food.y === y) && !powerups.some(p => p.x === x && p.y === y)) {
+                    tempObstacles.push({ x, y, endTime: Date.now() + duration });
+                    updateTempObstacleMeshes();
+                    return;
+                }
+            }
+        }
+
+        function gameStep() {
+            if (isPaused || isGameOver) return;
+            checkPowerupExpiry(); updatePowerupDisplay();
+            direction = nextDirection;
+            const head = { ...snake[0] };
+            switch (direction) { case 'up': head.y--; break; case 'down': head.y++; break; case 'left': head.x--; break; case 'right': head.x++; break; }
+
+            const canPassWall = activePowerups.ghost.active || activePowerups.immortal.active;
+            const canIgnoreCollision = activePowerups.shadowWalk.active;
+
+            if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+                if (canPassWall) { if (head.x < 0) head.x = GRID_SIZE - 1; if (head.x >= GRID_SIZE) head.x = 0; if (head.y < 0) head.y = GRID_SIZE - 1; if (head.y >= GRID_SIZE) head.y = 0; }
+                else if (!canIgnoreCollision) { gameOver(); return; }
+            }
+
+            const hitObs = obstacles.some(o => o.x === head.x && o.y === head.y);
+            const hitTemp = tempObstacles.some(o => o.x === head.x && o.y === head.y && Date.now() < o.endTime);
+            if (!frozenObstacles && (hitObs || hitTemp) && !activePowerups.immortal.active && !canIgnoreCollision) { gameOver(); return; }
+            if (snake.some(s => s.x === head.x && s.y === head.y) && !activePowerups.immortal.active && !canIgnoreCollision) { gameOver(); return; }
+
+            snake.unshift(head);
+
+            if (food && head.x === food.x && head.y === food.y) {
+                let points = 10;
+                if (activePowerups.double.active) points *= 2;
+                if (activePowerups.goldMode.active) points *= 2;
+                score += points;
+                document.getElementById('score').textContent = score;
+                if (score >= levels[currentLevel - 1].target) { levelComplete(); return; }
+                generateFood();
+            } else { snake.pop(); }
+
+            const pIdx = powerups.findIndex(p => p.x === head.x && p.y === head.y);
+            if (pIdx !== -1) { activatePowerup(powerups[pIdx]); powerups.splice(pIdx, 1); updatePowerupMeshes(); }
+
+            updateSnakeMeshes(); updateTempObstacleMeshes();
+            document.getElementById('progressFill').style.width = Math.min(100, (score / levels[currentLevel - 1].target) * 100) + '%';
+        }
+
+        function activatePowerup(p) {
+            const now = Date.now();
+            if (p.type === 'speed') { activePowerups.speed.active = true; activePowerups.speed.endTime = now + p.duration; gameSpeed = Math.max(40, baseSpeed - 40); updateGameSpeed(); }
+            else if (p.type === 'slow') { activePowerups.slow.active = true; activePowerups.slow.endTime = now + p.duration; gameSpeed = baseSpeed + 40; updateGameSpeed(); }
+            else if (p.type === 'immortal') { activePowerups.immortal.active = true; activePowerups.immortal.endTime = now + p.duration; }
+            else if (p.type === 'shrink') { if (snake.length > 3) snake = snake.slice(0, Math.max(3, snake.length - 3)); }
+            else if (p.type === 'double') { activePowerups.double.active = true; activePowerups.double.endTime = now + p.duration; }
+            updatePowerupDisplay();
+        }
+
+        function updateGameSpeed() { clearInterval(gameLoop); gameLoop = setInterval(gameStep, gameSpeed); }
+
+        function updatePowerupDisplay() {
+            const container = document.getElementById('powerupStatus'); container.innerHTML = '';
+            const now = Date.now();
+            const names = { speed: '加速', slow: '减速', immortal: '无敌', double: '双倍分', ghost: '穿墙', goldMode: '黄金', shadowWalk: '暗影' };
+            const colors = { speed: '#00ff88', slow: '#00d9ff', immortal: '#ffd700', double: '#ff00ff', ghost: '#00d9ff', goldMode: '#ffd700', shadowWalk: '#4a0080' };
+            Object.entries(activePowerups).forEach(([k, v]) => {
+                if (v.active && v.endTime > 0) { const rem = Math.ceil((v.endTime - now) / 1000); if (rem > 0) { const ind = document.createElement('div'); ind.className = 'powerup-indicator'; ind.style.color = colors[k]; ind.style.borderColor = colors[k]; ind.textContent = (names[k] || k) + ' ' + rem + 's'; container.appendChild(ind); } }
+            });
+            document.getElementById('skillCooldown').textContent = Math.max(0, Math.ceil((skillCooldownEnd - now) / 1000)) > 0 ? Math.max(0, Math.ceil((skillCooldownEnd - now) / 1000)) + 's' : '就绪';
+        }
+
+        function checkPowerupExpiry() {
+            const now = Date.now();
+            Object.entries(activePowerups).forEach(([k, v]) => {
+                if (v.active && v.endTime > 0 && now >= v.endTime) { v.active = false; v.endTime = 0; if (k === 'speed' || k === 'slow') { gameSpeed = baseSpeed; updateGameSpeed(); } }
+            });
+        }
+
+        function useSkill() {
+            if (isGameOver || isPaused || currentSkin.skillEffect === null) return;
+            const now = Date.now();
+            if (now < skillCooldownEnd) return;
+            skillCooldownEnd = now + currentSkin.skillCooldown;
+
+            switch (currentSkin.skillEffect) {
+                case 'dash': for (let i = 0; i < 5; i++) setTimeout(() => { if (!isGameOver && !isPaused) gameStep(); }, i * 50); showSkillEffect('闪电冲刺!', '#ffff00'); break;
+                case 'freeze': frozenObstacles = true; updateObstacleMeshes(); setTimeout(() => { frozenObstacles = false; updateObstacleMeshes(); }, 5000); showSkillEffect('障碍冻结 5秒!', '#00d9ff'); break;
+                case 'clearPath': { const head = snake[0]; const toRm = []; for (let i = 0; i < 5; i++) { let cx = head.x, cy = head.y; switch (direction) { case 'up': cy -= i + 1; break; case 'down': cy += i + 1; break; case 'left': cx -= i + 1; break; case 'right': cx += i + 1; break; } obstacles.forEach((o, idx) => { if (o.x === cx && o.y === cy) toRm.push(idx); }); } toRm.reverse().forEach(idx => obstacles.splice(idx, 1)); updateObstacleMeshes(); showSkillEffect('火焰清除!', '#ff4400'); } break;
+                case 'ghost': activePowerups.ghost.active = true; activePowerups.ghost.endTime = now + 5000; showSkillEffect('穿墙 5秒!', '#aaaaaa'); break;
+                case 'goldMode': activePowerups.goldMode.active = true; activePowerups.goldMode.endTime = now + 8000; activePowerups.double.active = true; activePowerups.double.endTime = now + 8000; activePowerups.immortal.active = true; activePowerups.immortal.endTime = now + 8000; showSkillEffect('双倍分+无敌 8秒!', '#ffd700'); break;
+                case 'randomBuff': { const buffs = ['speed', 'immortal', 'double']; const buff = buffs[Math.floor(Math.random() * buffs.length)]; activePowerups[buff].active = true; activePowerups[buff].endTime = now + 6000; showSkillEffect('获得 ' + { speed: '加速', immortal: '无敌', double: '双倍分' }[buff] + ' 6秒!', '#ff00ff'); } break;
+                case 'shadowWalk': activePowerups.shadowWalk.active = true; activePowerups.shadowWalk.endTime = now + 4000; showSkillEffect('暗影步 4秒!', '#4a0080'); break;
+                case 'timeSlow': gameSpeed = baseSpeed + 60; updateGameSpeed(); setTimeout(() => { gameSpeed = baseSpeed; updateGameSpeed(); }, 6000); showSkillEffect('时间减缓 6秒!', '#00ffcc'); break;
+                case 'dragonBreath': activePowerups.immortal.active = true; activePowerups.immortal.endTime = now + 5000; obstacles = obstacles.slice(0, Math.floor(obstacles.length * 0.3)); updateObstacleMeshes(); showSkillEffect('龙息! 清除70%障碍+无敌5秒!', '#ff0066'); break;
+                case 'teleport': { let nx, ny, att = 0; do { nx = Math.floor(Math.random() * GRID_SIZE); ny = Math.floor(Math.random() * GRID_SIZE); att++; } while (att < 100 && (snake.some(s => s.x === nx && s.y === ny) || obstacles.some(o => o.x === nx && o.y === ny))); snake[0] = { x: nx, y: ny }; activePowerups.immortal.active = true; activePowerups.immortal.endTime = now + 2000; updateSnakeMeshes(); showSkillEffect('传送成功!', '#9900ff'); } break;
+            }
+            updatePowerupDisplay();
+        }
+
+        function showSkillEffect(text, color) { const ind = document.createElement('div'); ind.className = 'powerup-indicator'; ind.style.color = color; ind.style.borderColor = color; ind.textContent = text; document.getElementById('powerupStatus').appendChild(ind); setTimeout(() => ind.remove(), 3000); }
+
+        function levelComplete() {
+            clearInterval(gameLoop); if (tempObstacleTimer) { clearInterval(tempObstacleTimer); tempObstacleTimer = null; }
+            totalScore += score;
+            let unlockedSkin = null;
+            for (const s of skins) { if (s.unlockLevel === currentLevel && maxLevelReached < currentLevel) { unlockedSkin = s; break; } }
+            if (currentLevel > maxLevelReached) { maxLevelReached = currentLevel; localStorage.setItem('snakeMaxLevel', maxLevelReached); }
+            if (currentLevel >= 20) { if (totalScore > highScore) { highScore = totalScore; localStorage.setItem('snakeHighScore', highScore); document.getElementById('highScore').textContent = highScore; } document.getElementById('totalScore').textContent = totalScore; document.getElementById('gameWin').classList.remove('hidden'); }
+            else { document.getElementById('completedLevel').textContent = currentLevel; document.getElementById('levelScore').textContent = score; if (unlockedSkin) { document.getElementById('unlockNotice').classList.remove('hidden'); document.getElementById('unlockSkinName').textContent = unlockedSkin.name + ' - 技能: ' + unlockedSkin.skill; } else { document.getElementById('unlockNotice').classList.add('hidden'); } document.getElementById('levelComplete').classList.remove('hidden'); }
+        }
+
+        function nextLevel() { document.getElementById('levelComplete').classList.add('hidden'); currentLevel++; initGame(); gameLoop = setInterval(gameStep, gameSpeed); }
+
+        function gameOver() {
+            isGameOver = true; clearInterval(gameLoop); if (tempObstacleTimer) { clearInterval(tempObstacleTimer); tempObstacleTimer = null; }
+            totalScore += score;
+            if (totalScore > highScore) { highScore = totalScore; localStorage.setItem('snakeHighScore', highScore); document.getElementById('highScore').textContent = highScore; }
+            if (currentLevel > maxLevelReached) { maxLevelReached = currentLevel; localStorage.setItem('snakeMaxLevel', maxLevelReached); }
+            document.getElementById('finalLevel').textContent = currentLevel; document.getElementById('finalScore').textContent = totalScore; document.getElementById('maxLevel').textContent = maxLevelReached;
+            document.getElementById('gameOver').classList.remove('hidden');
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden'); document.getElementById('gameOver').classList.add('hidden'); document.getElementById('gameWin').classList.add('hidden'); document.getElementById('levelComplete').classList.add('hidden');
+            currentLevel = 1; totalScore = 0; skillCooldownEnd = 0;
+            clearInterval(gameLoop); initGame(); gameLoop = setInterval(gameStep, gameSpeed);
+        }
+
+        function restartGame() { document.getElementById('gameOver').classList.add('hidden'); document.getElementById('gameWin').classList.add('hidden'); document.getElementById('levelComplete').classList.add('hidden'); initSkinSelector(); document.getElementById('startScreen').classList.remove('hidden'); }
+        function pauseGame() { if (isGameOver) return; isPaused = !isPaused; }
+        function changeDirection(newDir) { const opp = { 'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left' }; if (newDir !== opp[direction]) nextDirection = newDir; }
+
+        function updateLevelInfo() {
+            const details = document.getElementById('nextLevelDetails');
+            if (currentLevel < 20) { const next = levels[currentLevel]; details.innerHTML = '<li>🎯 目标分数: ' + next.target + '</li><li>🧱 障碍物: ' + next.obstacles + ' 个</li><li>⚡ 速度: 更快</li>'; document.getElementById('nextLevelInfo').classList.remove('hidden'); }
+            else { document.getElementById('nextLevelInfo').classList.add('hidden'); }
+        }
+
+        function initSkinSelector() {
+            [document.getElementById('skinGrid'), document.getElementById('skinGridInGame')].forEach(grid => {
+                if (!grid) return; grid.innerHTML = '';
+                skins.forEach(skin => {
+                    const unlocked = maxLevelReached >= skin.unlockLevel;
+                    const div = document.createElement('div');
+                    div.className = 'skin-option ' + (unlocked ? '' : 'locked') + (currentSkin.id === skin.id ? ' selected' : '');
+                    div.innerHTML = '<div class="skin-name">' + skin.name + '</div><div class="skin-unlock">' + (unlocked ? '已解锁' : '第' + skin.unlockLevel + '关解锁') + '</div><div class="skin-skill">' + skin.skill + '</div>';
+                    if (unlocked) div.onclick = () => selectSkin(skin);
+                    grid.appendChild(div);
+                });
+            });
+        }
+
+        function selectSkin(skin) { if (maxLevelReached >= skin.unlockLevel) { currentSkin = skin; localStorage.setItem('snakeCurrentSkin', skin.id); updateSkinDisplay(); initSkinSelector(); } }
+        function updateSkinDisplay() { document.getElementById('currentSkinName').textContent = currentSkin.name; document.getElementById('currentSkillName').textContent = currentSkin.skill; }
+        function hideSkinSelector() { document.getElementById('skinScreen').classList.add('hidden'); }
+
+        document.addEventListener('keydown', (e) => {
+            const keyMap = { 'ArrowUp': 'up', 'ArrowDown': 'down', 'ArrowLeft': 'left', 'ArrowRight': 'right', 'KeyW': 'up', 'KeyS': 'down', 'KeyA': 'left', 'KeyD': 'right' };
+            if (keyMap[e.code]) { e.preventDefault(); changeDirection(keyMap[e.code]); }
+            if (e.code === 'Space') { e.preventDefault(); pauseGame(); }
+            if (e.code === 'KeyE') { e.preventDefault(); useSkill(); }
+        });
+
+        document.getElementById('highScore').textContent = highScore;
+        const savedSkinId = localStorage.getItem('snakeCurrentSkin');
+        if (savedSkinId) { const savedSkin = skins.find(s => s.id === savedSkinId); if (savedSkin && maxLevelReached >= savedSkin.unlockLevel) currentSkin = savedSkin; }
+        initThreeJS(); initSkinSelector(); updateSkinDisplay(); initGame();
+    </script>
+</body>
+</html>
