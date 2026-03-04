@@ -875,6 +875,13 @@
                         canPlace = false;
                         break;
                     }
+                    // 检查与蛇的距离（曼哈顿距离不小于5）
+                    const snakeHead = snake[0];
+                    const distToHead = Math.abs(obs.x - snakeHead.x) + Math.abs(obs.y - snakeHead.y);
+                    if (distToHead < 5) {
+                        canPlace = false;
+                        break;
+                    }
                 }
                 
                 if (canPlace && placed + newObstacles.length <= count) {
@@ -1351,9 +1358,9 @@
                     continue;
                 }
                 
-                // 检查与蛇头距离（曼哈顿距离）
+                // 检查与蛇头距离（曼哈顿距离不小于5）
                 const distToHead = Math.abs(x - head.x) + Math.abs(y - head.y);
-                if (distToHead < 3) {
+                if (distToHead < 5) {
                     attempts++;
                     continue;
                 }
